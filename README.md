@@ -25,12 +25,12 @@
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Setup.ps1 `
-    -BetterGI 'E:\Games\BetterGI' -BetterGIProfile 'Daily' `
-    -March7th 'E:\Games\March7thAssistant' `
-    -MaaEnd 'E:\Games\MaaEnd' -MaaEndInstance '全套日常'
+    -BetterGI 'C:\Path\To\BetterGI' -BetterGIProfile 'Daily' `
+    -March7th 'C:\Path\To\March7thAssistant' `
+    -MaaEnd 'C:\Path\To\MaaEnd' -MaaEndInstance '全套日常'
 ```
 
-三个路径分别指向含 `BetterGI.exe`、`m7a.exe`、`MaaEnd.exe` 的目录。`Setup.ps1` 生成 `config.local.json`。支持通过 `-DataDirectory` 指定数据位置，通过 `-GameTimeZone` 和 `-ResetHour` 配置每日重置时间。原神分辨率与全屏模式可通过 `-GenshinAutomationWidth`、`-GenshinAutomationHeight` 和 `-GenshinAutomationFullscreen` 设置。以中国服为例，默认按中国标准时间凌晨 4 点切换游戏日。
+三个路径分别指向含 `BetterGI.exe`、`m7a.exe`、`MaaEnd.exe` 的目录。示例路径仅用于说明格式，请替换为本机实际目录。`Setup.ps1` 生成只保存在本机的 `config.local.json`。支持通过 `-DataDirectory` 指定数据位置，通过 `-GameTimeZone` 和 `-ResetHour` 配置每日重置时间。原神分辨率与全屏模式可通过 `-GenshinAutomationWidth`、`-GenshinAutomationHeight` 和 `-GenshinAutomationFullscreen` 设置。默认按中国服凌晨 4 点切换游戏日，也可以按账号所在服务器修改。
 
 ```powershell
 .\Run-Daily.cmd -PreflightOnly
@@ -57,7 +57,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Setup.ps1 `
 | `dashboard/` | 本机 HTTP 服务、配置修改、运行记录展示及更新 |
 | `tests/` | 纯本地单元测试和 Windows 兼容性预检 |
 
-控制台只监听 `127.0.0.1`。配置、日志、截图、历史和原生程序留在本机。项目不打包第三方二进制、游戏资产或已登录账号配置。提交前检查 Git 暂存区，尤其留意使用自定义名称放在仓库下的数据目录。
+控制台只监听 `127.0.0.1`。配置、日志、截图、历史和原生程序留在本机。项目不打包第三方二进制、游戏资产或已登录账号配置。`config.local.json` 和 `data/` 已加入忽略规则，克隆项目后需要由 `Setup.ps1` 按当前电脑重新生成。提交前检查 Git 暂存区，尤其留意使用自定义名称放在仓库下的数据目录。
 
 ## 开发
 

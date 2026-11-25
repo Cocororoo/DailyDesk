@@ -48,14 +48,14 @@ User\OneDragon\<配置名>.json
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Setup.ps1 `
-  -BetterGI 'D:\Games\BetterGI' `
+  -BetterGI 'C:\Path\To\BetterGI' `
   -BetterGIProfile 'Daily' `
-  -March7th 'D:\Games\March7thAssistant' `
-  -MaaEnd 'D:\Games\MaaEnd' `
+  -March7th 'C:\Path\To\March7thAssistant' `
+  -MaaEnd 'C:\Path\To\MaaEnd' `
   -MaaEndInstance '全套日常'
 ```
 
-`Setup.ps1` 会检查三个入口文件和 BetterGI 配置文件，并生成 `config.local.json`。该文件只保存在本机，不应提交到仓库。
+示例路径只用于说明格式，请替换为本机实际安装目录。`Setup.ps1` 会检查三个入口文件和 BetterGI 配置文件，并生成 `config.local.json`。该文件只保存在本机，已被 `.gitignore` 排除，不应提交到仓库。
 
 常用可选参数如下。
 
