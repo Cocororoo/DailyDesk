@@ -13,8 +13,9 @@ $ConfigPath = $config.ConfigPath
 $sequence = if ($Game -eq 'All') { @($config.Sequence) } else { @($Game) }
 if ($Game -ne 'All' -and $Game -notin $config.Sequence) { throw "$Game is not configured." }
 $adapters = Join-Path (Split-Path $PSScriptRoot -Parent) 'adapters'
+$genshinScripts = if ($config.Genshin.LocalScripts) { $config.Genshin.LocalScripts } else { Join-Path $adapters 'genshin' }
 $entries = @{
-    Genshin = Join-Path $adapters 'genshin\Invoke-BetterGIDailySession.ps1'
+    Genshin = Join-Path $genshinScripts 'Invoke-BetterGIDailySession.ps1'
     StarRail = Join-Path $adapters 'starrail\Invoke-StarRailDailySession.ps1'
     Endfield = Join-Path $adapters 'endfield\Invoke-MaaEndDailySession.ps1'
 }
@@ -22,7 +23,13 @@ function Get-AdapterArguments($Name) {
     $settings = $config.$Name
     $data = Join-Path $config.DataRoot $Name
     switch ($Name) {
-        'Genshin' { @{BgiRoot=$settings.Directory; Profile=$settings.Profile; ManageDisplay=[bool]$settings.ManageDisplay; AutomationWidth=[int]$settings.AutomationWidth; AutomationHeight=[int]$settings.AutomationHeight; AutomationFullscreen=[bool]$settings.AutomationFullscreen; DataDirectory=$data; GameDay=(Get-DailyGameDay $config).DayOfWeek.ToString()} }
+        'Genshin' {
+            if ($settings.LocalScripts) {
+                @{BgiRoot=$settings.Directory; AutomationDisplayMode=$(if($settings.AutomationFullscreen){'Fullscreen'}else{'Windowed'})}
+            } else {
+                @{BgiRoot=$settings.Directory; Profile=$settings.Profile; ManageDisplay=[bool]$settings.ManageDisplay; AutomationWidth=[int]$settings.AutomationWidth; AutomationHeight=[int]$settings.AutomationHeight; AutomationFullscreen=[bool]$settings.AutomationFullscreen; DataDirectory=$data; GameDay=(Get-DailyGameDay $config).DayOfWeek.ToString()}
+            }
+        }
         'StarRail' { @{InstallDirectory=$settings.Directory; DataDirectory=$data} }
         'Endfield' { @{MaaRoot=$settings.Directory; InstanceName=$settings.Instance; ApiPort=$settings.ApiPort; DataDirectory=$data} }
     }

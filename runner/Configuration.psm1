@@ -29,6 +29,14 @@
     if ($config.Genshin.AutomationFullscreen -eq $null) { $config.Genshin | Add-Member NoteProperty AutomationFullscreen $false }
     if ($config.Genshin.AutomationWidth -notin (640..7680) -or $config.Genshin.AutomationHeight -notin (480..4320) -or
         $config.Genshin.AutomationFullscreen -isnot [bool]) { throw 'Invalid Genshin automation display settings.' }
+    if ($config.Genshin.LocalScripts) {
+        $config.Genshin.LocalScripts = Resolve-ConfiguredPath $config.Genshin.LocalScripts
+        foreach ($script in 'Invoke-BetterGIDailySession.ps1','Get-BetterGIDailyResult.ps1') {
+            if (!(Test-Path -LiteralPath (Join-Path $config.Genshin.LocalScripts $script) -PathType Leaf)) {
+                throw "Local Genshin integration is missing $script."
+            }
+        }
+    }
     $config | Add-Member NoteProperty ConfigPath $Path
     $config | Add-Member NoteProperty DataRoot $dataDirectory
     $config | Add-Member NoteProperty RunRoot (Join-Path $dataDirectory 'runs')

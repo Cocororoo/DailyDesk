@@ -47,7 +47,15 @@ foreach($game in $sequence){
     $missing=if(!$stage){'未执行'}elseif($cancelled){'中断；缺少完成证据'}else{'待核验；缺少完成证据'}
     if($stage.Status -eq 'preflight_failed'){Add-Row $label '启动预检' '失败；已跳过该游戏' $stage.Error $null}
     if($game -eq 'Genshin'){
+        if($result.PartyLifecycleCheck){
+            $party=$result.PartyLifecycleCheck
+            $slot=if($party.Recorded.Count){$party.Recorded[0].originalSlot}
+            Add-Row $label '刷本队伍／还原原队' $(if($party.Status -eq 'verified'){'已核验'}else{$missing}) ('原第'+$slot+'队；'+($party.Errors -join '；')) $resultPath
+        }
         Add-Row $label '秘境／清树脂' $(if($result.ResinExhausted){'日志支持完成'}else{$missing}) $(if($result){'目标：'+$result.ExpectedDomain+'；挑战完成 '+$result.ChallengeCompletedRounds+' 次；最终原粹 '+$result.OriginalResin+'，浓缩 '+$result.CondensedResin}else{'无本轮资源读数'}) $resultPath
+        if($result.ArtifactBagFullObserved){
+            Add-Row $label '圣遗物背包' '空间不足；领奖被阻止' '圣遗物背包已满，秘境奖励无法结算。' $resultPath
+        }
         $commissionDetail=$result.Summary
         if($result.CommissionCheck){
             $c=$result.CommissionCheck

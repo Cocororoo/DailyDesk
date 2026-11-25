@@ -29,6 +29,9 @@ class DailyModel:
         self.pending = None
         self.cache = (0, None)
         self.data = (self.config_path.parent / self.config["DataDirectory"]).resolve()
+        self.evidence_roots = [self.data] + [
+            (self.config_path.parent / path).resolve() for path in self.config.get("AdditionalEvidenceDirectories", [])
+        ]
         self.plans = NativePlans(self.config, self.config_path, self.lock, self.processes, self.launch_pending)
         from updates import installed_paths, recover_installation
         recover_installation(self.data, installed_paths(self))
@@ -227,7 +230,7 @@ class DailyModel:
         if value not in paths:
             raise AppError("该路径不是本轮已记录的证据。", 403)
         path = Path(value).resolve()
-        if not any(path.is_relative_to(root.resolve()) for root in [self.data]):
+        if not any(path.is_relative_to(root) for root in self.evidence_roots):
             raise AppError("证据路径超出自动化目录。", 403)
         if not path.is_file() or path.suffix.lower() not in (".json", ".log", ".txt", ".md", ".png", ".jpg"):
             raise AppError("该证据为目录，请在原始报告中查看路径。", 404)

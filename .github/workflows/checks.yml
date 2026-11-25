@@ -24,3 +24,5 @@ jobs:
       - run: node --check dashboard/static/app.js
       - shell: powershell
         run: ./tests/Test-Preflight.ps1
+      - shell: powershell
+        run: ./tests/Test-SuiteLifecycle.ps1

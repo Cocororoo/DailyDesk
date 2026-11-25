@@ -2,6 +2,9 @@
 param([Parameter(Mandatory)][string]$ControlDirectory,[Parameter(Mandatory)][string]$ConfigPath)
 $ErrorActionPreference='Stop'
 $adapters=Join-Path (Split-Path $PSScriptRoot -Parent) 'adapters'
+Import-Module (Join-Path $PSScriptRoot 'Configuration.psm1') -Force
+$config = Read-DailyConfig $ConfigPath
+$genshinScripts = if ($config.Genshin.LocalScripts) { $config.Genshin.LocalScripts } else { Join-Path $adapters 'genshin' }
 $receipt=[ordered]@{At=(Get-Date).ToString('o');Cancelled=$false;DisplayRecovered=$null;Errors=@()}
 function Save-FinalSuite($Path,$Value){
     $temp=$Path+'.finalizing'
@@ -26,11 +29,11 @@ try {
             $sessionPath=Join-Path $stage.EvidenceDirectory 'session.json'
             $session=Get-Content -Raw -Encoding UTF8 -LiteralPath $sessionPath|ConvertFrom-Json
             if($session.RunDirectory){
-                try {$null=& (Join-Path $adapters 'genshin\Get-BetterGIDailyResult.ps1') -RunDirectory $session.RunDirectory;$stage.ResultFile=Join-Path $session.RunDirectory 'result.json'}catch{$receipt.Errors+=$_.Exception.Message}
+                try {$null=& (Join-Path $genshinScripts 'Get-BetterGIDailyResult.ps1') -RunDirectory $session.RunDirectory;$stage.ResultFile=Join-Path $session.RunDirectory 'result.json'}catch{$receipt.Errors+=$_.Exception.Message}
             }
             if($cancelled -and !(Get-Process BetterGI,YuanShen,GenshinImpact -ErrorAction SilentlyContinue)){
                 try {
-                    $null=& (Join-Path $adapters 'genshin\Invoke-BetterGIDailySession.ps1') -RecoverSessionDirectory $stage.EvidenceDirectory
+                    $null=& (Join-Path $genshinScripts 'Invoke-BetterGIDailySession.ps1') -RecoverSessionDirectory $stage.EvidenceDirectory
                     $session=Get-Content -Raw -Encoding UTF8 -LiteralPath $sessionPath|ConvertFrom-Json
                     $session.Status='cancelled_display_restored';$session.GameClosed=$true;$session.BetterGIClosed=$true
                     $session.Error='用户关闭每日上班窗口；显示偏好已恢复，日常完成情况仍须核验。'

@@ -11,6 +11,7 @@ KINDS = {"completed": "success", "executed": "", "skipped": "", "failed": "faile
 ATTENTION = {"failed", "incomplete", "missing"}
 NOTES = {"委托页截图／OCR", "秘境掉落物品", "资源与奖励实际收益", "理智最终余量", "日志异常／提示"}
 TITLES = {"秘境／清树脂": "清树脂", "遗器清体力": "体力副本", "每日实训500与领奖": "每日实训奖励",
+          "刷本队伍／还原原队": "切队与还原",
           "退出／恢复显示设置": "退出与恢复分辨率",
           "特产采集／存仓": "特产采集与存仓", "源质／基质清理智": "源质清理智",
           "日常／邮件／活动／通行证领奖": "日常与通行证奖励"}
@@ -107,6 +108,8 @@ def task_display(row):
         text = "游戏已关闭"
     elif name == "进入大世界" and state == "failed":
         text = "启动界面识别超时"
+    elif name == "圣遗物背包" and state == "failed":
+        text = "圣遗物背包已满，秘境奖励无法结算"
     elif name == "特产采集／存仓":
         if state == "failed":
             if re.search(r"\bAutoCollectWulingTalosCap1Start\b", detail):

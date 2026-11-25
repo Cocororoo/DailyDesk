@@ -47,6 +47,10 @@ class NativePlans:
             "star": self.star / "config.yaml",
             "end": self.end / "config/mxu-MaaEnd.json",
         }
+        if scripts := self.config["Genshin"].get("LocalScripts"):
+            assets = (base / scripts).resolve().parent / "assets"
+            self.native_paths.update(gen_template=assets / (self.profile + ".json"),
+                                     gen_policy=assets / "ResinDomainPolicy.json")
 
     def refresh_catalog(self):
         self.catalog = self.load_catalog()
@@ -95,7 +99,8 @@ class NativePlans:
 
     def configuration(self):
         with self.lock:
-            flow = read_json(self.native_paths["gen_flow"])
+            flow = read_json(self.native_paths.get("gen_template", self.native_paths["gen_flow"]))
+            policy = read_json(self.native_paths["gen_policy"]) if "gen_policy" in self.native_paths else None
             text = self.native_paths["star"].read_text(encoding="utf-8-sig")
             category = self.yaml_scalar(text, "instance_type")
             block = re.search(r"^instance_names:[ \t]*\r?\n(.*?)(?=^[^\s#][^\r\n]*:|\Z)", text, re.M | re.S)
@@ -109,7 +114,8 @@ class NativePlans:
             native_domain = flow_tasks(flow).get("自动秘境", False)
             return {"revision": self.revision(), "savedAt": read_json(self.data / "dashboard/last-save.json", {}).get("at"),
                 "catalog": self.catalog, "profile": self.profile, "nativeGenshinDomain": native_domain, "games": {
-                "Genshin": {"domain": flow.get("DomainName") or "", "sunday": str(flow.get("SundaySelectedValue") or "1"),
+                "Genshin": {"domain": policy["PrimaryDomain"] if policy else flow.get("DomainName") or "",
+                    "sunday": str(policy["SundaySelectedValue"] if policy else flow.get("SundaySelectedValue") or "1"),
                     "tasks": {name: any(enabled and flow.get("TaskDefinitions", {}).get(key, key) == name
                                        for key, enabled in flow["TaskEnabledList"].items()) for name in GEN_OPTIONAL}},
                 "StarRail": {"type": category, "target": match[1].strip().strip("'\""),
@@ -162,19 +168,34 @@ class NativePlans:
         previous = self.validate(body)
         g, s, e = (body["games"][k] for k in GAMES)
         p = self.native_paths
-        flow = read_json(p["gen_flow"])
-        if flow_tasks(flow).get("自动秘境"):
-            if g["domain"] != flow.get("DomainName"):
-                flow["DomainName"] = g["domain"]
-                flow["WeeklyDomainEnabled"] = False
-            if g["sunday"] != str(flow.get("SundaySelectedValue") or "1"):
-                for key in ("SundaySelectedValue", "SundayEverySelectedValue", "SundayWeeklySelectedValue"):
-                    flow[key] = g["sunday"]
-        for key in flow["TaskEnabledList"]:
-            name = flow.get("TaskDefinitions", {}).get(key, key)
-            if name in g["tasks"]:
-                flow["TaskEnabledList"][key] = g["tasks"][name]
-        changes = {p["gen_flow"]: encode_json(flow)} if g != previous["Genshin"] else {}
+        changes = {}
+        old_g = previous["Genshin"]
+        if g != old_g:
+            for path in [p["gen_flow"]] + ([p["gen_template"]] if "gen_template" in p else []):
+                flow = read_json(path)
+                if g["domain"] != old_g["domain"]:
+                    flow.update(DomainName=g["domain"], WeeklyDomainEnabled=False)
+                    if "gen_template" in p:
+                        for day in DAYS:
+                            flow[day + "DomainName"] = g["domain"]
+                if g["sunday"] != old_g["sunday"]:
+                    for key in ("SundaySelectedValue", "SundayEverySelectedValue", "SundayWeeklySelectedValue"):
+                        flow[key] = g["sunday"]
+                for key in flow["TaskEnabledList"]:
+                    name = flow.get("TaskDefinitions", {}).get(key, key)
+                    if name in g["tasks"] and g["tasks"][name] != old_g["tasks"][name]:
+                        flow["TaskEnabledList"][key] = g["tasks"][name]
+                changes[path] = encode_json(flow)
+            if "gen_policy" in p and any(g[key] != old_g[key] for key in ("domain", "sunday")):
+                policy = read_json(p["gen_policy"])
+                domain = next(d for d in self.catalog["Genshin"] if d["value"] == g["domain"])
+                policy.update(PrimaryDomain=g["domain"], PrimaryRegion=domain["region"],
+                              SundaySelectedValue=g["sunday"], SundayMaterial=f"第{g['sunday']}组（按游戏内周日列表顺序）",
+                              RequestedAt=now())
+                if policy["FallbackDomain"] == g["domain"]:
+                    policy["AutomaticFallback"] = False
+                    policy["FallbackDomain"] = old_g["domain"]
+                changes[p["gen_policy"]] = encode_json(policy)
         text = p["star"].read_text(encoding="utf-8-sig")
         text = self.replace_scalar(text, "instance_type", s["type"])
         block = re.search(r"^instance_names:[ \t]*\r?\n(.*?)(?=^[^\s#][^\r\n]*:|\Z)", text, re.M | re.S)
