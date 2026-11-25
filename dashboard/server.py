@@ -102,9 +102,16 @@ class Handler(BaseHTTPRequestHandler):
             if path not in files or not (STATIC / files[path]).exists():
                 raise AppError("页面不存在。", 404)
             file = STATIC / files[path]
-            kind = "image/vnd.microsoft.icon" if file.suffix.lower() == ".ico" else (mimetypes.guess_type(file.name)[0] or "application/octet-stream")
-            if file.suffix in (".html", ".js", ".css"):
-                kind += "; charset=utf-8"
+            # Keep the local dashboard response types stable across Python and OS MIME tables.
+            # Windows maps .js to application/javascript, while the browser contract uses text/javascript.
+            kinds = {
+                ".html": "text/html; charset=utf-8",
+                ".js": "text/javascript; charset=utf-8",
+                ".css": "text/css; charset=utf-8",
+                ".svg": "image/svg+xml",
+                ".ico": "image/vnd.microsoft.icon",
+            }
+            kind = kinds.get(file.suffix.lower(), mimetypes.guess_type(file.name)[0] or "application/octet-stream")
             return self.send_bytes(file.read_bytes(), kind)
         except AppError as exc:
             self.json({"error": str(exc)}, exc.status)
