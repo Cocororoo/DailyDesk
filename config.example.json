@@ -1,0 +1,11 @@
+{
+  "SchemaVersion": 1,
+  "DataDirectory": "data",
+  "Sequence": ["Genshin", "StarRail", "Endfield"],
+  "GameTimeZone": "China Standard Time",
+  "ResetHour": 4,
+  "SevenZip": "",
+  "Genshin": {"Directory": "", "Profile": "", "ManageDisplay": true, "AutomationWidth": 1920, "AutomationHeight": 1080, "AutomationFullscreen": false},
+  "StarRail": {"Directory": ""},
+  "Endfield": {"Directory": "", "Instance": "", "ApiPort": 12701}
+}

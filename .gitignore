@@ -1,0 +1,8 @@
+/config.local.json
+/data/
+__pycache__/
+*.py[cod]
+.venv/
+*.lnk
+*.log
+*.local.*
